@@ -1,0 +1,6 @@
+target/
+nbproject/private/
+nbproject/
+.netbeans_automatic_build
+.idea/
+*.iml
