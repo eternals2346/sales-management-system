@@ -17,123 +17,177 @@ public class SalesServiceTest {
     }
 
     // ========================================================
-    // 1. Tests for calculateSubtotal() (Yêu cầu ít nhất 3 test)
+    // 1. calculateSubtotal (5 Test Cases - Khớp 100% Excel)
     // ========================================================
     @Test
-    void testCalculateSubtotal_NormalOrder() {
-        // Price = 500, Quantity = 3 -> Subtotal = 1500
-        Product p = new Product("P01", "Ao thun", 500, 3);
+    void testCalculateSubtotal_UTCID01_NormalOrder() {
+        // UTCID01: Product("P01", 500.0, 3) -> 1500.0
+        Product p = new Product("P01", "Ao thun", 500.0, 3);
         assertEquals(1500.0, salesService.calculateSubtotal(p), 0.001);
     }
 
     @Test
-    void testCalculateSubtotal_SingleItem() {
-        // Price = 250, Quantity = 1 -> Subtotal = 250
-        Product p = new Product("P02", "Giay the thao", 250, 1);
+    void testCalculateSubtotal_UTCID02_SingleItem() {
+        // UTCID02: Product("P02", 250.0, 1) -> 250.0 (Biên quantity = 1)
+        Product p = new Product("P02", "Giay the thao", 250.0, 1);
         assertEquals(250.0, salesService.calculateSubtotal(p), 0.001);
     }
 
     @Test
-    void testCalculateSubtotal_NullProduct_ThrowsException() {
-        assertThrows(IllegalArgumentException.class, () -> salesService.calculateSubtotal(null));
+    void testCalculateSubtotal_UTCID03_DecimalPrice() {
+        // UTCID03: Product("P03", 100.5, 2) -> 201.0 (Giá thập phân)
+        Product p = new Product("P03", "Phu kien", 100.5, 2);
+        assertEquals(201.0, salesService.calculateSubtotal(p), 0.001);
+    }
+
+    @Test
+    void testCalculateSubtotal_UTCID04_LargeQuantity() {
+        // UTCID04: Product("P04", 1000.0, 10) -> 10000.0
+        Product p = new Product("P04", "Ao khoac", 1000.0, 10);
+        assertEquals(10000.0, salesService.calculateSubtotal(p), 0.001);
+    }
+
+    @Test
+    void testCalculateSubtotal_UTCID05_NullProduct_ThrowsException() {
+        // UTCID05: null -> IllegalArgumentException("Product cannot be null")
+        IllegalArgumentException ex = assertThrows(
+            IllegalArgumentException.class,
+            () -> salesService.calculateSubtotal(null)
+        );
+        assertEquals("Product cannot be null", ex.getMessage());
     }
 
     // ========================================================
-    // 2. Tests for calculateDiscount() & Task 3 Parameterized Test
-    // (Yêu cầu ít nhất 6 test gồm Boundary: 999.99, 1000, 4999.99, 5000, 9999.99, 10000)
+    // 2. calculateDiscount (7 Test Cases - Khớp 100% Excel)
     // ========================================================
     @ParameterizedTest
     @CsvSource({
-        "999.99, 0.0",         // < 1,000 -> 0%
-        "1000.0, 50.0",        // 1,000 - < 5,000 -> 5%
-        "4999.99, 249.9995",   // Biên trên của 5%
-        "5000.0, 500.0",       // 5,000 - < 10,000 -> 10%
-        "9999.99, 999.999",    // Biên trên của 10%
-        "10000.0, 1500.0"      // >= 10,000 -> 15%
+        "999.99, 0.0",         // UTCID01: Biên dưới < 1,000 -> 0%
+        "1000.0, 50.0",        // UTCID02: Biên 1,000 -> 5%
+        "4999.99, 249.9995",   // UTCID03: Biên trên 5%
+        "5000.0, 500.0",       // UTCID04: Biên 5,000 -> 10%
+        "9999.99, 999.999",    // UTCID05: Biên trên 10%
+        "10000.0, 1500.0"      // UTCID06: Biên >= 10,000 -> 15%
     })
-    void testCalculateDiscount_BoundaryAndNormalCases(double subtotal, double expected) {
+    void testCalculateDiscount_UTCID01_to_06_Boundary(double subtotal, double expected) {
         assertEquals(expected, salesService.calculateDiscount(subtotal), 0.001);
     }
 
     @Test
-    void testCalculateDiscount_NegativeSubtotal_ThrowsException() {
-        assertThrows(IllegalArgumentException.class, () -> salesService.calculateDiscount(-50));
+    void testCalculateDiscount_UTCID07_NegativeSubtotal_ThrowsException() {
+        // UTCID07: subtotal = -50 -> IllegalArgumentException("Subtotal cannot be negative")
+        IllegalArgumentException ex = assertThrows(
+            IllegalArgumentException.class,
+            () -> salesService.calculateDiscount(-50.0)
+        );
+        assertEquals("Subtotal cannot be negative", ex.getMessage());
     }
 
     // ========================================================
-    // 3. Tests for calculateShippingFee() (Yêu cầu ít nhất 3 test)
-    // Rules: < 2000 -> 50, >= 2000 -> 0
+    // 3. calculateShippingFee (5 Test Cases - Khớp 100% Excel)
     // ========================================================
     @Test
-    void testCalculateShippingFee_Below2000() {
+    void testCalculateShippingFee_UTCID01_ZeroSubtotal() {
+        // UTCID01: subtotal = 0.0 -> 50.0
+        assertEquals(50.0, salesService.calculateShippingFee(0.0), 0.001);
+    }
+
+    @Test
+    void testCalculateShippingFee_UTCID02_Below2000() {
+        // UTCID02: subtotal = 1999.99 -> 50.0
         assertEquals(50.0, salesService.calculateShippingFee(1999.99), 0.001);
     }
 
     @Test
-    void testCalculateShippingFee_Exactly2000_Boundary() {
-        // Mốc biên 2000: theo quy tắc >= 2000 là 0
+    void testCalculateShippingFee_UTCID03_Exactly2000_Boundary() {
+        // UTCID03: subtotal = 2000.0 -> 0.0 (Miễn ship từ 2000)
         assertEquals(0.0, salesService.calculateShippingFee(2000.0), 0.001);
     }
 
     @Test
-    void testCalculateShippingFee_Above2000() {
-        assertEquals(0.0, salesService.calculateShippingFee(3000.0), 0.001);
+    void testCalculateShippingFee_UTCID04_Above2000() {
+        // UTCID04: subtotal = 3500.0 -> 0.0
+        assertEquals(0.0, salesService.calculateShippingFee(3500.0), 0.001);
     }
 
     @Test
-    void testCalculateShippingFee_NegativeSubtotal_ThrowsException() {
-        assertThrows(IllegalArgumentException.class, () -> salesService.calculateShippingFee(-10));
+    void testCalculateShippingFee_UTCID05_NegativeSubtotal_ThrowsException() {
+        // UTCID05: subtotal = -10.0 -> IllegalArgumentException("Subtotal cannot be negative")
+        IllegalArgumentException ex = assertThrows(
+            IllegalArgumentException.class,
+            () -> salesService.calculateShippingFee(-10.0)
+        );
+        assertEquals("Subtotal cannot be negative", ex.getMessage());
     }
 
     // ========================================================
-    // 4. Tests for calculateTotal() (Yêu cầu ít nhất 2 test)
-    // Formula: Total = Subtotal - Discount + Shipping
+    // 4. calculateTotal (3 Test Cases - Khớp 100% Excel)
     // ========================================================
     @Test
-    void testCalculateTotal_WithDiscountAndShipping() {
-        // Price = 500, Quantity = 3 -> Subtotal = 1500
-        // Discount = 1500 * 5% = 75
-        // Shipping = 50 (vì 1500 < 2000)
-        // Total = 1500 - 75 + 50 = 1475
-        Product p = new Product("P03", "Balo", 500, 3);
+    void testCalculateTotal_UTCID01_WithDiscountAndShipping() {
+        // UTCID01: Balo (500*3=1500) -> Disc 75, Ship 50 -> Total 1475.0
+        Product p = new Product("P03", "Balo", 500.0, 3);
         assertEquals(1475.0, salesService.calculateTotal(p), 0.001);
     }
 
     @Test
-    void testCalculateTotal_LargeOrder_FreeShipping() {
-        // Price = 1000, Quantity = 10 -> Subtotal = 10000
-        // Discount = 10000 * 15% = 1500
-        // Shipping = 0 (vì 10000 >= 2000)
-        // Total = 10000 - 1500 + 0 = 8500
-        Product p = new Product("P04", "Laptop Bag", 1000, 10);
+    void testCalculateTotal_UTCID02_LargeOrder_FreeShipping() {
+        // UTCID02: Laptop Bag (1000*10=10000) -> Disc 1500, Ship 0 -> Total 8500.0
+        Product p = new Product("P04", "Laptop Bag", 1000.0, 10);
         assertEquals(8500.0, salesService.calculateTotal(p), 0.001);
     }
 
+    @Test
+    void testCalculateTotal_UTCID03_NullProduct_ThrowsException() {
+        // UTCID03: product null -> IllegalArgumentException("Product cannot be null")
+        IllegalArgumentException ex = assertThrows(
+            IllegalArgumentException.class,
+            () -> salesService.calculateTotal(null)
+        );
+        assertEquals("Product cannot be null", ex.getMessage());
+    }
+
     // ========================================================
-    // 5. Tests for classifyCustomer() (Yêu cầu ít nhất 4 test)
-    // < 1000: REGULAR | 1000 - < 5000: SILVER | 5000 - < 10000: GOLD | >= 10000: VIP
+    // 5. classifyCustomer (6 Test Cases - Khớp 100% Excel)
     // ========================================================
     @Test
-    void testClassifyCustomer_Regular() {
+    void testClassifyCustomer_UTCID01_Regular() {
+        // UTCID01: total = 999.99 -> REGULAR
         assertEquals("REGULAR", salesService.classifyCustomer(999.99));
     }
 
     @Test
-    void testClassifyCustomer_Silver() {
+    void testClassifyCustomer_UTCID02_Silver_LowerBoundary() {
+        // UTCID02: total = 1000.0 -> SILVER
         assertEquals("SILVER", salesService.classifyCustomer(1000.0));
+    }
+
+    @Test
+    void testClassifyCustomer_UTCID03_Silver_UpperBoundary() {
+        // UTCID03: total = 4999.99 -> SILVER
         assertEquals("SILVER", salesService.classifyCustomer(4999.99));
     }
 
     @Test
-    void testClassifyCustomer_Gold() {
+    void testClassifyCustomer_UTCID04_Gold_Boundary() {
+        // UTCID04: total = 5000.0 -> GOLD
         assertEquals("GOLD", salesService.classifyCustomer(5000.0));
-        assertEquals("GOLD", salesService.classifyCustomer(9999.99));
     }
 
     @Test
-    void testClassifyCustomer_VIP_Boundary10000() {
-        // Mốc biên 10000: theo quy tắc >= 10000 là VIP
+    void testClassifyCustomer_UTCID05_VIP_Boundary() {
+        // UTCID05: total = 10000.0 -> VIP
         assertEquals("VIP", salesService.classifyCustomer(10000.0));
-        assertEquals("VIP", salesService.classifyCustomer(15000.0));
+    }
+
+    @Test
+    void testClassifyCustomer_UTCID06_NegativeTotal_ThrowsException() {
+        // UTCID06: total = -10.0 -> IllegalArgumentException("Total cannot be negative")
+        IllegalArgumentException ex = assertThrows(
+            IllegalArgumentException.class,
+            () -> salesService.classifyCustomer(-10.0)
+        );
+        assertEquals("Total cannot be negative", ex.getMessage());
     }
 }
+

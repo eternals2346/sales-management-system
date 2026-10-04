@@ -44,6 +44,9 @@ public class SalesService {
     }
 
     public String classifyCustomer(double total) {
+        if (total < 0) {
+            throw new IllegalArgumentException("Total cannot be negative");
+        }
         if (total < 1000) {
             return "REGULAR";
         } else if (total < 5000) {
